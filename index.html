@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vatfree TikTok-review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<style>
+  :root {
+    --blue:#0069B4; --pink:#E6007E; --pale:#EEF2FA; --bg:#F6F8FC; --card:#fff; --text:#111; --muted:#5b6070; --line:#dde3ee;
+    --s-live:#1a9b5b; --s-plan:#0069B4; --s-wacht:#E6007E; --s-idee:#9CC2E0; --s-maak:#9a6400; --s-nee:#9aa0ad;
+  }
+  @media (prefers-color-scheme: dark) { :root { --bg:#12151c; --card:#1c2029; --text:#eef1f7; --muted:#a3a9b8; --line:#2c3240; --pale:#222838; } }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:Montserrat, system-ui, sans-serif; background:var(--bg); color:var(--text); }
+  header { background:var(--blue); color:#fff; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; position:sticky; top:0; z-index:5; }
+  header h1 { font-size:17px; margin:0; font-weight:800; }
+  header button { background:transparent; color:#fff; border:1px solid #fff6; }
+  main { max-width:1100px; margin:0 auto; padding:16px; }
+  h2 { font-size:19px; font-weight:800; margin:22px 0 4px; }
+  h2 .n { background:var(--pink); color:#fff; border-radius:999px; padding:1px 9px; font-size:14px; margin-left:6px; vertical-align:2px; }
+  .sub { color:var(--muted); font-size:13px; margin:0 0 12px; }
+  button { font:600 14px Montserrat, sans-serif; padding:9px 14px; border-radius:999px; cursor:pointer; border:1px solid var(--line); background:var(--card); color:var(--text); }
+  button.ok { background:var(--blue); color:#fff; border-color:var(--blue); }
+  button.no { color:#b00045; }
+  button:disabled { opacity:.5; cursor:default; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; }
+  .kind { font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--pink); margin-bottom:6px; }
+  .meta { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .tag { font-size:12px; background:var(--pale); padding:3px 9px; border-radius:999px; color:var(--muted); }
+  .tag.ev { background:#E6007E1a; color:var(--pink); }
+  .tag.warn { background:#ffb3001f; color:#9a6400; }
+  label { display:block; font-size:12px; font-weight:600; color:var(--muted); margin:10px 0 4px; }
+  textarea, input { width:100%; font:15px Montserrat, sans-serif; padding:9px 10px; border:1px solid var(--line); border-radius:9px; background:var(--bg); color:var(--text); }
+  textarea.hook { font-weight:800; font-size:16px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .media { display:flex; gap:8px; overflow-x:auto; margin:6px 0 4px; }
+  .media video { width:100%; max-width:300px; border-radius:10px; background:#000; }
+  .media img { height:340px; border-radius:10px; }
+  .empty { color:var(--muted); padding:18px; text-align:center; background:var(--card); border:1px dashed var(--line); border-radius:14px; }
+  .small { font-size:13px; color:var(--muted); }
+  .err { color:#b00045; font-size:13px; white-space:pre-wrap; }
+  a { color:var(--blue); }
+  /* kalender */
+  .calhead { display:flex; align-items:center; gap:10px; margin:26px 0 8px; flex-wrap:wrap; }
+  .calhead h2 { margin:0; flex:1; }
+  .legend { display:flex; flex-wrap:wrap; gap:12px; font-size:12px; color:var(--muted); margin-bottom:10px; }
+  .legend i, .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px; }
+  .cal { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:4px; }
+  .dow { font-size:12px; font-weight:600; color:var(--muted); text-align:center; padding:4px 0; }
+  .day { background:var(--card); border:1px solid var(--line); border-radius:10px; min-height:104px; padding:6px; overflow:hidden; }
+  .day.out { opacity:.4; }
+  .day.today { border:2px solid var(--pink); }
+  .day .d { font-size:12px; font-weight:800; color:var(--muted); display:flex; justify-content:space-between; }
+  .day .evn { font-size:10px; color:var(--pink); line-height:1.2; margin:2px 0; }
+  .post { display:block; width:100%; text-align:left; border:0; border-left:4px solid var(--c); background:var(--pale); border-radius:6px; padding:4px 6px; margin-top:4px; font-size:11px; font-weight:600; line-height:1.25; cursor:pointer; color:var(--text); }
+  .post .st { display:block; font-size:10px; font-weight:600; color:var(--c); }
+  .gap { font-size:10px; color:var(--muted); margin-top:6px; }
+  @media (max-width:640px) {
+    .day { min-height:64px; padding:4px; }
+    .post { font-size:0; padding:0; height:10px; border-left-width:0; background:var(--c); }
+    .post .st, .day .evn, .gap { display:none; }
+    .day .evdot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--pink); }
+    .grid { grid-template-columns:1fr; }
+  }
+  @media (min-width:641px) { .day .evdot { display:none; } }
+  dialog { border:0; border-radius:16px; padding:0; width:min(560px, calc(100vw - 32px)); background:var(--card); color:var(--text); }
+  dialog::backdrop { background:#0008; }
+  dialog .card { border:0; }
+  .x { float:right; }
+  .login { max-width:380px; margin:60px auto; }
+</style>
+</head>
+<body>
+<header><h1>Vatfree · TikTok-review</h1><button id="uit" hidden>Uitloggen</button></header>
+<main id="app"></main>
+<dialog id="dlg"></dialog>
+<script>
+const sb = supabase.createClient(window.REVIEW_CONFIG.url, window.REVIEW_CONFIG.key);
+const app = document.getElementById('app'), dlg = document.getElementById('dlg');
+const STATUS = {
+  posted:        ['Live',                'var(--s-live)'],
+  scheduled:     ['Ingepland',           'var(--s-plan)'],
+  approved:      ['Goedgekeurd',         'var(--s-plan)'],
+  video_ready:   ['Wacht op akkoord',    'var(--s-wacht)'],
+  idea:          ['Idee, wacht op akkoord','var(--s-idee)'],
+  idea_approved: ['In de maak',          'var(--s-maak)'],
+  script_ready:  ['In de maak',          'var(--s-maak)'],
+  failed:        ['Mislukt',             '#b00045'],
+  rejected:      ['Afgekeurd',           'var(--s-nee)'],
+};
+let rows = [], lookups = {}, month = new Date(); month.setDate(1);
+const esc = s => (s ?? '').toString().replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const dag = d => d ? new Date(d + 'T12:00').toLocaleDateString('nl-NL', { weekday:'short', day:'numeric', month:'short' }) : 'geen datum';
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } }
+
+async function start() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return login();
+  document.getElementById('uit').hidden = false;
+  const [ev, fm, ct] = await Promise.all([
+    sb.from('events').select('id,name,starts_on,ends_on,confirmed,for_tiktok'),
+    sb.from('formats').select('code,name'),
+    sb.from('categories').select('code,name'),
+  ]);
+  lookups.events = (ev.data || []).filter(e => e.for_tiktok);
+  lookups.ev = Object.fromEntries((ev.data || []).map(e => [e.id, e]));
+  lookups.fm = Object.fromEntries((fm.data || []).map(f => [f.code, f.name]));
+  lookups.ct = Object.fromEntries((ct.data || []).map(c => [c.code, c.name]));
+  load();
+}
+
+function login() {
+  app.innerHTML = `<div class="card login"><h2>Inloggen</h2>
+    <p class="small">Je krijgt een inloglink per e-mail.</p>
+    <input id="mail" type="email" placeholder="je@vatfree.com" value="${esc(store('mail') || '')}">
+    <div class="row"><button class="ok" id="stuur">Stuur inloglink</button></div>
+    <p class="small" id="msg"></p></div>`;
+  document.getElementById('stuur').onclick = async () => {
+    const email = document.getElementById('mail').value.trim();
+    store('mail', email);
+    const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: location.href.split('#')[0] } });
+    document.getElementById('msg').textContent = error ? error.message : 'Check je mail en klik op de link.';
+  };
+}
+
+async function load() {
+  const { data, error } = await sb.from('videos').select('*').order('planned_for', { ascending: true, nullsFirst: false });
+  if (error) { app.innerHTML = `<p class="err">${esc(error.message)}</p>`; return; }
+  rows = data; render();
+}
+
+// ---------- pagina ----------
+function render() {
+  const todo = rows.filter(r => r.status === 'video_ready' || r.status === 'idea');
+  const videos = todo.filter(r => r.status === 'video_ready'), ideas = todo.filter(r => r.status === 'idea');
+  app.innerHTML = `
+    <h2>Klaar voor jouw akkoord ${todo.length ? `<span class="n">${todo.length}</span>` : ''}</h2>
+    <p class="sub">Video's: na akkoord worden ze automatisch ingepland op TikTok. Ideeën: na akkoord wordt de video gemaakt (kost dan pas iets).</p>
+    <div id="todo"></div>
+    <div class="calhead">
+      <h2 id="mnd"></h2>
+      <button id="prev" aria-label="Vorige maand">‹</button><button id="nu">Vandaag</button><button id="next" aria-label="Volgende maand">›</button>
+    </div>
+    <div class="legend">${[['Live','var(--s-live)'],['Goedgekeurd / ingepland','var(--s-plan)'],['Wacht op akkoord','var(--s-wacht)'],['Idee','var(--s-idee)'],['In de maak','var(--s-maak)'],['Afgekeurd','var(--s-nee)']]
+      .map(([l, c]) => `<span><i style="background:${c}"></i>${l}</span>`).join('')}</div>
+    <div class="cal" id="cal"></div>`;
+  const box = document.getElementById('todo');
+  if (!todo.length) box.innerHTML = '<div class="empty">Niets te reviewen. Alles is bij.</div>';
+  else {
+    const g = document.createElement('div'); g.className = 'grid';
+    [...videos, ...ideas].forEach(r => g.appendChild(card(r)));
+    box.appendChild(g);
+  }
+  document.getElementById('prev').onclick = () => { month.setMonth(month.getMonth() - 1); calendar(); };
+  document.getElementById('next').onclick = () => { month.setMonth(month.getMonth() + 1); calendar(); };
+  document.getElementById('nu').onclick = () => { month = new Date(); month.setDate(1); calendar(); };
+  calendar();
+}
+
+function calendar() {
+  document.getElementById('mnd').textContent = 'Contentkalender · ' + month.toLocaleDateString('nl-NL', { month:'long', year:'numeric' });
+  const cal = document.getElementById('cal');
+  const first = new Date(month); const offset = (first.getDay() + 6) % 7; // maandag eerst
+  const startD = new Date(first); startD.setDate(1 - offset);
+  const today = iso(new Date());
+  let html = ['ma','di','wo','do','vr','za','zo'].map(d => `<div class="dow">${d}</div>`).join('');
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(startD); d.setDate(startD.getDate() + i);
+    const key = iso(d);
+    if (i >= 35 && d.getMonth() !== month.getMonth()) break;
+    const posts = rows.filter(r => r.planned_for === key);
+    const evs = lookups.events.filter(e => e.starts_on === key);
+    const future = key >= today;
+    html += `<div class="day ${d.getMonth() !== month.getMonth() ? 'out' : ''} ${key === today ? 'today' : ''}">
+      <div class="d"><span>${d.getDate()}</span>${evs.length ? '<span class="evdot"></span>' : ''}</div>
+      ${evs.map(e => `<div class="evn">★ ${esc(e.name)}</div>`).join('')}
+      ${posts.map(r => { const [l, c] = STATUS[r.status] || [r.status, 'var(--muted)'];
+        return `<button class="post" style="--c:${c}" data-id="${r.id}" title="${esc(l)}: ${esc(r.hook || r.topic)}"><span class="st">${esc(l)}</span>${esc((r.hook || r.topic).slice(0, 60))}</button>`; }).join('')}
+      ${!posts.some(p => p.status !== 'rejected') && future && d.getMonth() === month.getMonth() ? '<div class="gap">nog leeg</div>' : ''}
+    </div>`;
+  }
+  cal.innerHTML = html;
+  cal.querySelectorAll('.post').forEach(b => b.onclick = () => openDetail(rows.find(r => r.id === b.dataset.id)));
+}
+
+function openDetail(r) {
+  dlg.innerHTML = '';
+  const c = card(r, true);
+  const x = document.createElement('button'); x.className = 'x'; x.textContent = 'Sluiten'; x.onclick = () => dlg.close();
+  c.prepend(x);
+  dlg.appendChild(c); dlg.showModal();
+}
+
+function tags(r) {
+  const ev = r.event_id && lookups.ev[r.event_id];
+  const [l, c] = STATUS[r.status] || [r.status, 'var(--muted)'];
+  return `<div class="meta">
+    <span class="tag"><span class="dot" style="background:${c}"></span>${esc(l)}</span>
+    <span class="tag">${dag(r.planned_for)}</span>
+    <span class="tag">${esc(r.audience)}</span>
+    ${r.format_code ? `<span class="tag">${esc(lookups.fm[r.format_code] || r.format_code)}</span>` : ''}
+    ${r.category_code ? `<span class="tag">${esc(lookups.ct[r.category_code] || r.category_code)}</span>` : ''}
+    ${ev ? `<span class="tag ev">${esc(ev.name)}${ev.confirmed ? '' : ' (datum checken)'}</span>` : ''}
+    ${r.is_ai_generated ? '<span class="tag warn">AI-label aan</span>' : ''}
+  </div>`;
+}
+
+const feedbackField = r => `<label>Feedback</label><textarea rows="2" data-f="feedback" placeholder="Wat moet er anders? Komt bij de maker terecht.">${esc(r.feedback)}</textarea>`;
+
+function card(r, inDialog) {
+  const el = document.createElement('div');
+  el.className = 'card';
+  const tagsLine = (r.hashtags || []).map(h => '#' + h).join(' ');
+  let body = '', buttons = '';
+  if (r.status === 'idea') {
+    body = `<div class="kind">Idee</div>${tags(r)}
+      <label>Hook</label><textarea class="hook" rows="2" data-f="hook">${esc(r.hook)}</textarea>
+      <label>Idee</label><textarea rows="4" data-f="concept">${esc(r.concept || r.topic)}</textarea>
+      <label>Caption</label><textarea rows="3" data-f="caption">${esc(r.caption)}</textarea>
+      <label>Datum</label><input type="date" data-f="planned_for" value="${esc(r.planned_for)}">
+      ${feedbackField(r)}`;
+    buttons = `<button class="ok" data-a="idee-ok">Goedkeuren, maak deze video</button><button class="no" data-a="nee">Afkeuren</button>`;
+  } else if (r.status === 'video_ready') {
+    body = `<div class="kind">Video</div>${tags(r)}
+      <div><b>${esc(r.hook)}</b></div>
+      <div class="media" data-media></div>
+      <label>Caption</label><textarea rows="4" data-f="caption">${esc(r.caption)}</textarea>
+      <div class="small">${esc(tagsLine)}</div>
+      <label>Postdatum</label><input type="date" data-f="planned_for" value="${esc(r.planned_for)}">
+      ${feedbackField(r)}`;
+    buttons = `<button class="ok" data-a="video-ok">Akkoord, plaats op TikTok</button><button data-a="opnieuw">Opnieuw maken met feedback</button><button class="no" data-a="nee">Afkeuren</button>`;
+  } else {
+    const extra = r.status === 'posted' && r.tiktok_url ? `<a href="${esc(r.tiktok_url)}" target="_blank" rel="noopener">Bekijk op TikTok</a>`
+      : r.scheduled_for ? `Gepland: ${new Date(r.scheduled_for).toLocaleString('nl-NL', { dateStyle:'full', timeStyle:'short' })}` : '';
+    body = `${tags(r)}<div><b>${esc(r.hook || r.topic)}</b></div>
+      ${r.media_paths?.length ? '<div class="media" data-media></div>' : ''}
+      <p class="small">${esc(r.concept || '')}</p>
+      ${r.caption ? `<p class="small">${esc(r.caption)}<br>${esc(tagsLine)}</p>` : ''}
+      <p class="small">${extra}</p>
+      ${r.error ? `<p class="err">${esc(r.error)}</p>` : ''}
+      ${feedbackField(r)}`;
+    buttons = `<button data-a="feedback">Feedback opslaan</button>`;
+    if (r.status === 'approved') buttons += `<button class="no" data-a="intrekken">Akkoord intrekken</button>`;
+    if (r.status === 'rejected' || r.status === 'failed') buttons += `<button data-a="terug">Terug naar ideeën</button>`;
+    if (r.status === 'scheduled') body += `<p class="small">Al ingepland bij Upload-Post. Tegenhouden kan in Upload-Post (Scheduled posts).</p>`;
+  }
+  el.innerHTML = body + `<div class="row">${buttons}</div><p class="small" data-msg></p>`;
+  if (el.querySelector('[data-media]')) loadMedia(r, el.querySelector('[data-media]'));
+  el.querySelectorAll('[data-a]').forEach(b => b.onclick = () => act(r, b.dataset.a, el, inDialog));
+  return el;
+}
+
+async function loadMedia(r, box) {
+  for (const p of r.media_paths || []) {
+    const { data } = await sb.storage.from('videos').createSignedUrl(p, 3600);
+    if (!data) continue;
+    box.insertAdjacentHTML('beforeend', r.media_type === 'video'
+      ? `<video src="${data.signedUrl}" controls playsinline preload="metadata"></video>`
+      : `<img src="${data.signedUrl}" alt="">`);
+  }
+}
+
+async function act(r, a, el, inDialog) {
+  const val = f => { const x = el.querySelector(`[data-f="${f}"]`); return x ? x.value : undefined; };
+  const now = new Date().toISOString();
+  const edits = {};
+  ['hook', 'concept', 'caption', 'feedback'].forEach(f => { const v = val(f); if (v !== undefined) edits[f] = v.trim() || null; });
+  const d = val('planned_for'); if (d !== undefined) edits.planned_for = d || null;
+  let upd;
+  if (a === 'idee-ok')   upd = { ...edits, status: 'idea_approved', idea_approved_at: now };
+  if (a === 'video-ok')  upd = { ...edits, status: 'approved', approved_at: now };
+  if (a === 'opnieuw')   { if (!edits.feedback) return alert('Schrijf eerst bij Feedback wat er anders moet.'); upd = { ...edits, status: 'idea_approved' }; }
+  if (a === 'nee')       upd = { ...edits, status: 'rejected' };
+  if (a === 'feedback')  upd = { feedback: edits.feedback };
+  if (a === 'intrekken') upd = { feedback: edits.feedback, status: 'video_ready', approved_at: null };
+  if (a === 'terug')     upd = { feedback: edits.feedback, status: 'idea' };
+  el.querySelectorAll('button').forEach(b => b.disabled = true);
+  const { error } = await sb.from('videos').update(upd).eq('id', r.id);
+  el.querySelectorAll('button').forEach(b => b.disabled = false);
+  if (error) { el.querySelector('[data-msg]').textContent = error.message; return; }
+  Object.assign(r, upd);
+  if (a === 'feedback') { el.querySelector('[data-msg]').textContent = 'Feedback opgeslagen.'; return; }
+  if (inDialog) dlg.close();
+  render();
+}
+
+document.getElementById('uit').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+sb.auth.onAuthStateChange(ev => { if (ev === 'SIGNED_IN' && !lookups.ev) start(); });
+start();
+</script>
+</body>
+</html>
